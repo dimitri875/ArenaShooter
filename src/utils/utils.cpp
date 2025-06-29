@@ -47,35 +47,6 @@ float cross(const Vector2& a, const Vector2& b)
     return (a.x * b.y - a.y * b.x);
 }
 
-// void drawLine(Color* frameBuffer, float x0, float y0, float x1, float y1, Color c)
-// {
-//     if (x0 < 0)
-//         x0 = 0;
-//     if (y0 < 0)
-//         y0 = 0;
-//     if (x0 >= WIDTH)
-//         x0 = WIDTH-1;
-//     if (y0 >= HEIGHT)
-//         y0 = HEIGHT-1;
-
-//     if (x1 < 0)
-//         x1 = 0;
-//     if (y1 < 0)
-//         y1 = 0;
-//     if (x1 >= WIDTH)
-//         x1 = WIDTH-1;
-//     if (y1 >= HEIGHT)
-//         y1 = HEIGHT-1;
-
-
-//     for (float t = 0.0f; t <= 1.0f; t += 0.001)
-//     {
-//         float x = x0 * (1-t) + x1 * t;
-//         float y = y0 * (1-t) + y1 * t;
-//         frameBuffer[(int)(x + y * WIDTH)] = c;
-//     }
-// }
-
 void drawLine(Color* frameBuffer, float x0, float y0, float x1, float y1, Color c)
 {
     float dx = x1 - x0;
@@ -83,7 +54,7 @@ void drawLine(Color* frameBuffer, float x0, float y0, float x1, float y1, Color 
 
     int steps = (int)(fmax(fabs(dx), fabs(dy)));
 
-    if (steps == 0) return; // zero-length line
+    if (steps == 0) return;
 
     float xInc = dx / steps;
     float yInc = dy / steps;
@@ -106,6 +77,18 @@ void drawLine(Color* frameBuffer, float x0, float y0, float x1, float y1, Color 
     }
 }
 
+void drawRect(Color* frameBuffer, float left, float top, float width, float height, Color c)
+{
+    int ileft   = (int)left;
+    int itop    = (int)top;
+    int iwidth  = (int)width;
+    int iheight = (int)height;
+
+    for (int w = 0; w < iwidth; w++)
+    {
+        drawLine(frameBuffer, ileft+w, itop, ileft+w, itop+iheight, c);
+    }
+}
 
 float lineSegmentRayIntersection(const Vector2& rayOrigin, const Vector2& rayDirection, const Vector2& point1, const Vector2& point2)
 {

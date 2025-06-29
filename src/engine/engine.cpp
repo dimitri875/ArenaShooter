@@ -1,6 +1,7 @@
 #include "engine/engine.h"
 #include "engine/renderer.h"
 #include "engine/map.h"
+#include "engine/input.h"
 #include "structs.h"
 #include <vector>
 #include <string>
@@ -8,7 +9,7 @@
 
 std::vector<Sector> sectors;
 std::vector<Wall> walls;
-Player player;
+Player player = {0, 0, 3, 45.0f * PI / 180.0f, 0};
 
 void loadMap(const std::string& path)
 {
@@ -22,4 +23,10 @@ void renderFrame(Color* frameBuffer)
 
     assert(sectors.size() > 0 && walls.size() > 0);
     renderMap(frameBuffer, sectors, walls, player);
+}
+
+void handleInput()
+{
+    handleKeyboard(player);
+    handleMouse(player);
 }

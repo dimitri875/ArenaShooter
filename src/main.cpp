@@ -25,6 +25,7 @@ int main(int argc, char **argv)
     
     while (!WindowShouldClose())
     {
+        handleInput();
         renderFrame(frameBuffer);
 
         UpdateTexture(frame, frameBuffer);

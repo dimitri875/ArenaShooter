@@ -60,7 +60,10 @@ void loadLevelFromFile(const std::string& path, std::vector<Sector>& sectors, st
         (sector) ? sectorsRaw.push_back(buffer) : wallsRaw.push_back(buffer);
     }
 
-    int sectorIdx = 0, wallIdx = 0;
+    std::cout << "[DEBUG] Read " << sectorsRaw.size() << " sector(s)" << std::endl;
+    std::cout << "[DEBUG] Read " << wallsRaw.size() << " wall(s)" << std::endl;
+
+    size_t sectorIdx = 0, wallIdx = 0;
     while (sectorIdx < sectorsRaw.size())
     {
         std::vector<std::string> tokens = tokenize(sectorsRaw[sectorIdx++]);
