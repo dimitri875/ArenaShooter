@@ -17,3 +17,10 @@ struct Player
     float x, y, height;
     float yaw, pitch;
 };
+
+struct RayHitInfo
+{
+    float x, y, dist;
+    int sectorId, wallIdx;
+    int portal;
+};

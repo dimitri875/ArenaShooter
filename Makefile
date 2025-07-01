@@ -1,6 +1,6 @@
 CXX = g++
 CXXFLAGS = -Wall
-LDFLAGS = -lraylib -lgdi32 -lwinmm
+LDFLAGS = -static -static-libgcc -static-libstdc++ -lraylib -lgdi32 -lwinmm
 
 SRC_DIR := src
 INCLUDE_DIRS := -Iraylib -Iinclude
