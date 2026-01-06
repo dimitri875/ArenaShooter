@@ -18,9 +18,15 @@ struct Player
     float yaw, pitch;
 };
 
-struct RayHitInfo
+// struct RayHitInfo
+// {
+//     float x, y, dist;
+//     int sectorId, wallIdx;
+//     int portal;
+// };
+
+struct RayHit
 {
-    float x, y, dist;
-    int sectorId, wallIdx;
-    int portal;
+    int wallIdx, portal, frontSector, backSector;
+    float distance;
 };

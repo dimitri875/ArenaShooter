@@ -4,12 +4,13 @@
 #include <math.h>
 #include <iostream>
 #include <vector>
-#include <unordered_set>
+#include <algorithm>
 
 static Vector2 lightDir = v_normalize({-1.0f, 0.5f});
-static std::unordered_set<int> visited;
-static RayHitInfo rayInfo[N_RAYS];
-static std::unordered_set<int> wallSequence[N_RAYS];
+// static std::unordered_set<int> visited;
+// static RayHitInfo rayInfo[N_RAYS];
+static std::vector<RayHit> rayInfo[N_RAYS];
+// static std::unordered_set<int> wallSequence[N_RAYS];
 
 Color getColor(const Vector2& lightDir, const Wall& w)
 {
@@ -23,12 +24,11 @@ Color getColor(const Vector2& lightDir, const Wall& w)
     return c;
 }
 
-RayHitInfo getRayHitInfo(int ray, const Vector2& origin, const Vector2& direction, const std::vector<Sector>& sectors, const std::vector<Wall>& walls)
+std::vector<RayHit> getRayHitInfo(int ray, const Vector2& origin, const Vector2& direction, const std::vector<Sector>& sectors, const std::vector<Wall>& walls)
 {
-    RayHitInfo info;
-    info.dist = INFINITY;
+    std::vector<RayHit> info;
 
-    wallSequence[ray].clear();
+    // wallSequence[ray].clear();
 
     for (const Sector& s : sectors)
     {
@@ -41,141 +41,166 @@ RayHitInfo getRayHitInfo(int ray, const Vector2& origin, const Vector2& directio
 
             float distance = lineSegmentRayIntersection(origin, direction, point1, point2);
 
-            if (distance != INFINITY)
-            {
-                wallSequence[ray].insert(s.idx+off);
+            if (distance != INFINITY) {
+                RayHit hit = {s.idx+off, w.portal, s.id, distance};
+                info.push_back(hit);
             }
 
-            if (distance < info.dist)
-            {
-                info.dist = distance;
-                info.portal = w.portal;
-                info.sectorId = s.id;
-                info.wallIdx = s.idx+off;
-            }
+            // if (distance != INFINITY)
+            // {
+            //     wallSequence[ray].insert(s.idx+off);
+            // }
+
+            // if (distance < info.dist)
+            // {
+            //     info.dist = distance;
+            //     info.portal = w.portal;
+            //     info.sectorId = s.id;
+            //     info.wallIdx = s.idx+off;
+            // }
         }
-    }
 
+    }
+    
+    std::sort(info.begin(), info.end(), [](const RayHit &a, const RayHit &b) {
+        return a.distance < b.distance;
+    });
+    
     return info;
 }
 
-void extendRayAndRender(Color* frameBuffer, int ray, int sectorId, const std::vector<Sector>& sectors, const std::vector<Wall>& walls, const Player& p)
-{
-    if (wallSequence[ray].size() == 0)
-        return;
+// void extendRayAndRender(Color* frameBuffer, int ray, int sectorId, float prevTop, float prevBottom, const std::vector<Sector>& sectors, const std::vector<Wall>& walls, const Player& p)
+// {
+    // if (wallSequence[ray].size() == 0 || prevTop >= prevBottom)
+    //     return;
 
-    float ao = -FOV/2 + ray * FOV/N_RAYS;
-    int closestWallIdx = -1;
-    float distance = INFINITY;
+    // float ao = -FOV/2 + ray * FOV/N_RAYS;
+    // int closestWallIdx = -1;
+    // float distance = INFINITY;
 
-    for (int wIdx : wallSequence[ray])
-    {
-        const Wall& w = walls[wIdx];
+    // for (int wIdx : wallSequence[ray])
+    // {
+    //     const Wall& w = walls[wIdx];
 
-        Vector2 origin = {p.x, p.y};
-        Vector2 direction = {cos(p.yaw+ao), sin(p.yaw+ao)};
-        Vector2 point1 = {w.x0, w.y0};
-        Vector2 point2 = {w.x1, w.y1};
+    //     Vector2 origin = {p.x, p.y};
+    //     Vector2 direction = {cos(p.yaw+ao), sin(p.yaw+ao)};
+    //     Vector2 point1 = {w.x0, w.y0};
+    //     Vector2 point2 = {w.x1, w.y1};
 
-        float tmp = lineSegmentRayIntersection(origin, direction, point1, point2);
+    //     float tmp = lineSegmentRayIntersection(origin, direction, point1, point2);
 
-        if (tmp < distance)
-        {
-            distance = tmp;
-            closestWallIdx = wIdx;
-        }
-    }
+    //     if (tmp < distance)
+    //     {
+    //         distance = tmp;
+    //         closestWallIdx = wIdx;
+    //     }
+    // }
 
-    if (closestWallIdx == -1)
-        return;
+    // if (closestWallIdx == -1)
+    //     return;
 
-    const Wall& w = walls[closestWallIdx];
+    // const Wall& w = walls[closestWallIdx];
 
-    if (w.portal)
-    {
-        wallSequence[ray].erase(closestWallIdx);
-        extendRayAndRender(frameBuffer, ray, w.portal, sectors, walls, p);
-    }
-    else
-    {
-        const Sector& s = sectors[sectorId];
+    // const Sector& s = sectors[sectorId-1];
 
-        float playerZ = p.height;
+    // float playerZ = p.height;
+    
+    // float topZ = s.ceil - playerZ;
+    // float bottomZ = s.floor - playerZ;
+    
+    // float screenTop = (HEIGHT / 2.0f) - (topZ * SCALE) / (distance * cos(ao));
+    // float screenBottom = (HEIGHT / 2.0f) - (bottomZ * SCALE) / (distance * cos(ao));
+
+    // float left, top, width, height;
+    // width = (float)WIDTH/N_RAYS;
+    // left = ray * width;
+    // top = screenTop;
+    // height = screenBottom-screenTop;
+
+    // if (w.portal)
+    // {
+    //     wallSequence[ray].erase(closestWallIdx);
+
+    //     if (screenTop > prevTop)
+    //     {
+    //         drawRect(frameBuffer, left, prevTop, width, screenTop-prevTop, RED);
+    //     }
+    //     if (screenBottom < prevBottom)
+    //     {
+    //         drawRect(frameBuffer, left, screenBottom, width, prevBottom-screenBottom, GREEN);
+    //     }
+
+    //     extendRayAndRender(frameBuffer, ray, w.portal,  fmax(screenTop, prevTop), fmin(screenBottom, prevBottom), sectors, walls, p);
+    // }
+    // else
+    // {
+    //     drawRect(frameBuffer, left, top, width, height, getColor(lightDir, w));
+    // }
+
+// }
+
+// void renderWall(Color* frameBuffer, const Sector& s, const Wall& w, const Player& p)
+// {
+//     for (int ray = 0; ray < N_RAYS; ray++)
+//     {
+//         float ao = -FOV/2 + ray * (FOV/N_RAYS);
+//         float ra = p.yaw + ao;
+
+//         Vector2 rayDirection = {cos(ra), sin(ra)};
+//         Vector2 rayOrigin = {p.x, p.y};
+//         Vector2 point1 = {w.x0, w.y0};
+//         Vector2 point2 = {w.x1, w.y1};
+
+//         float distance = lineSegmentRayIntersection(rayOrigin, rayDirection, point1, point2);
+
+//         if (distance == INFINITY)
+//             continue;
         
-        float topZ = s.ceil - playerZ;
-        float bottomZ = s.floor - playerZ;
-        
-        float screenTop = (HEIGHT / 2.0f) - (topZ * SCALE) / (distance * cos(ao));
-        float screenBottom = (HEIGHT / 2.0f) - (bottomZ * SCALE) / (distance * cos(ao));
+//         float playerZ = p.height;
 
-        float left, top, width, height;
-        width = (float)WIDTH/N_RAYS;
-        left = ray * width;
-        top = screenTop;
-        height = screenBottom-screenTop;
+//         float topZ = s.ceil - playerZ;
+//         float bottomZ = s.floor - playerZ;
 
-        drawRect(frameBuffer, left, top, width, height, getColor(lightDir, w));
-    }
+//         float screenTop = (HEIGHT / 2.0f) - (topZ * SCALE) / (distance * cos(ao));
+//         float screenBottom = (HEIGHT / 2.0f) - (bottomZ * SCALE) / (distance * cos(ao));
 
-}
+//         Color c = getColor(lightDir, w);
 
-void renderWall(Color* frameBuffer, const Sector& s, const Wall& w, const Player& p)
-{
-    for (int ray = 0; ray < N_RAYS; ray++)
-    {
-        float ao = -FOV/2 + ray * (FOV/N_RAYS);
-        float ra = p.yaw + ao;
+//         drawRect(frameBuffer, ray * L_WIDTH, screenTop, L_WIDTH, screenBottom-screenTop, c);
+//     }
+// }
 
-        Vector2 rayDirection = {cos(ra), sin(ra)};
-        Vector2 rayOrigin = {p.x, p.y};
-        Vector2 point1 = {w.x0, w.y0};
-        Vector2 point2 = {w.x1, w.y1};
+// void renderSector(Color* frameBuffer, int id, const std::vector<Sector>& sectors, const std::vector<Wall>& walls, const Player& p)
+// {
+//     if (visited.find(id) != visited.end())
+//         return;
+//     visited.insert(id);
 
-        float distance = lineSegmentRayIntersection(rayOrigin, rayDirection, point1, point2);
+//     const Sector& s = sectors[id-1];
+//     for (int off = 0; off < s.numWalls; off++)
+//     {
+//         const Wall& w = walls[s.idx+off];
 
-        if (distance == INFINITY)
-            continue;
-        
-        float playerZ = p.height;
-
-        float topZ = s.ceil - playerZ;
-        float bottomZ = s.floor - playerZ;
-
-        float screenTop = (HEIGHT / 2.0f) - (topZ * SCALE) / (distance * cos(ao));
-        float screenBottom = (HEIGHT / 2.0f) - (bottomZ * SCALE) / (distance * cos(ao));
-
-        Color c = getColor(lightDir, w);
-
-        drawRect(frameBuffer, ray * L_WIDTH, screenTop, L_WIDTH, screenBottom-screenTop, c);
-    }
-}
-
-void renderSector(Color* frameBuffer, int id, const std::vector<Sector>& sectors, const std::vector<Wall>& walls, const Player& p)
-{
-    if (visited.find(id) != visited.end())
-        return;
-    visited.insert(id);
-
-    const Sector& s = sectors[id-1];
-    for (int off = 0; off < s.numWalls; off++)
-    {
-        const Wall& w = walls[s.idx+off];
-
-        if (!w.portal)
-        {
-            renderWall(frameBuffer, s, w, p);
-        }
-        else
-        {
-            renderSector(frameBuffer, w.portal, sectors, walls, p);
-        }
-    }
-}
+//         if (!w.portal)
+//         {
+//             renderWall(frameBuffer, s, w, p);
+//         }
+//         else
+//         {
+//             renderSector(frameBuffer, w.portal, sectors, walls, p);
+//         }
+//     }
+// }
 
 void renderMap(Color* frameBuffer, const std::vector<Sector>& sectors, const std::vector<Wall>& walls, const Player& p)
 {
     // visited.clear();
     // renderSector(frameBuffer, 1, sectors, walls, p);
+    int sectorId = getPlayerSector(p, sectors, walls);
+    std::cout << "Sector Id: " << sectorId << std::endl;
+    if (sectorId == 0) {
+        return;
+    }
 
     Vector2 origin = {p.x, p.y};
     for (int ray = 0; ray < N_RAYS; ray++)
@@ -184,57 +209,83 @@ void renderMap(Color* frameBuffer, const std::vector<Sector>& sectors, const std
         Vector2 direction = {cos(p.yaw+ao), sin(p.yaw+ao)};
         rayInfo[ray] = getRayHitInfo(ray, origin, direction, sectors, walls);
     }
-
+    
     for (int ray = 0; ray < N_RAYS; ray++)
     {
+        float ceilHeight = sectors[sectorId-1].ceil;
+        float floorHeight = sectors[sectorId-1].floor;
+
         float ao = -FOV/2 + ray * FOV/N_RAYS;
 
-        const RayHitInfo& info = rayInfo[ray];
-        const Wall& w = walls[info.wallIdx];
-        const Sector& s = sectors[info.sectorId-1];
+        const std::vector<RayHit>& sortedHits = rayInfo[ray];
+        for (const RayHit& hit : sortedHits) {
 
-        float playerZ = p.height;
-        
-        float topZ = s.ceil - playerZ;
-        float bottomZ = s.floor - playerZ;
-        
-        float screenTop = (HEIGHT / 2.0f) - (topZ * SCALE) / (info.dist * cos(ao));
-        float screenBottom = (HEIGHT / 2.0f) - (bottomZ * SCALE) / (info.dist * cos(ao));
-
-        float left, top, width, height;
-        width = (float)WIDTH/N_RAYS;
-        left = ray * width;
-        top = screenTop;
-        height = screenBottom - screenTop;
-
-        if (info.portal)
-        {
-            const Sector& next = sectors[info.portal-1];
+            float playerZ = p.height;
             
-            float portalTopZ = next.ceil - playerZ;
-            float portalBottomZ = next.floor - playerZ;
+            float topZ = ceilHeight - playerZ;
+            float bottomZ = floorHeight - playerZ;
+            
+            float screenTop = (HEIGHT / 2.0f) - (topZ * SCALE) / (hit.distance * cos(ao));
+            float screenBottom = (HEIGHT / 2.0f) - (bottomZ * SCALE) / (hit.distance * cos(ao));
+    
+            float left, top, width, height;
+            width = (float)WIDTH/N_RAYS;
+            left = ray * width;
+            top = screenTop;
+            height = screenBottom - screenTop;
+            
+            if (hit.portal) {
+                const Sector& s = sectors[hit.sectorId-1];
+                floorHeight = fmin(floorHeight, s.floor);
+                ceilHeight = fmax(ceilHeight, s.ceil);
+                
+                topZ = ceilHeight - playerZ;
+                bottomZ = floorHeight - playerZ;
 
-            float portalScreenTop = (HEIGHT / 2.0f) - (portalTopZ * SCALE) / (info.dist * cos(ao));
-            float portalScreenBottom = (HEIGHT / 2.0f) - (portalBottomZ * SCALE) / (info.dist * cos(ao));
+                float thisTop = (HEIGHT / 2.0f) - (topZ * SCALE) / (hit.distance * cos(ao));
+                float thisBottom = (HEIGHT / 2.0f) - (bottomZ * SCALE) / (hit.distance * cos(ao));
 
-            if (portalScreenTop > screenTop)
-            {
-                drawRect(frameBuffer, left, top, width, portalScreenTop-screenTop, GREEN);
+                if (screenTop < thisTop) {
+                    drawRect(frameBuffer, left, screenTop, width, thisTop-screenTop, RED);
+                }
+
+                if (screenBottom > thisBottom) {
+                    drawRect(frameBuffer, left, thisBottom, width, screenBottom-thisBottom, GREEN);
+                }
+
+            } else {
+                const Wall& w = walls[hit.wallIdx];
+                drawRect(frameBuffer, left, top, width, height, getColor(lightDir, w));
+                break;
             }
-            if (portalScreenBottom < screenBottom)
-            {
-                drawRect(frameBuffer, left, portalScreenBottom, width, portalScreenBottom-screenBottom, GREEN);
-            }
+        }
 
-            extendRayAndRender(frameBuffer, ray, next.id, sectors, walls, p);
-        }
-        else
-        {
-            drawRect(frameBuffer, left, top, width, height, getColor(lightDir, w));
-        }
+        // const Wall& w = walls[info.wallIdx];
+        // const Sector& s = sectors[info.sectorId-1];
+
+        // float playerZ = p.height;
+        
+        // float topZ = s.ceil - playerZ;
+        // float bottomZ = s.floor - playerZ;
+        
+        // float screenTop = (HEIGHT / 2.0f) - (topZ * SCALE) / (info.dist * cos(ao));
+        // float screenBottom = (HEIGHT / 2.0f) - (bottomZ * SCALE) / (info.dist * cos(ao));
+
+        // float left, top, width, height;
+        // width = (float)WIDTH/N_RAYS;
+        // left = ray * width;
+        // top = screenTop;
+        // height = screenBottom - screenTop;
+
+        // if (info.portal)
+        // {
+        //     extendRayAndRender(frameBuffer, ray, info.portal, screenTop, screenBottom, sectors, walls, p);
+        // }
+        // else
+        // {
+        //     drawRect(frameBuffer, left, top, width, height, getColor(lightDir, w));
+        // }
     }
-
-    renderMiniMap(frameBuffer, sectors, walls, p);
 }
 
 void renderMiniMap(Color* frameBuffer, const std::vector<Sector>& sectors, const std::vector<Wall>& walls, const Player& p)
@@ -259,4 +310,15 @@ void renderMiniMap(Color* frameBuffer, const std::vector<Sector>& sectors, const
 
     drawRect(frameBuffer, p.x-1+xo, p.y-1+yo, 2, 2, GREEN);
     drawLine(frameBuffer, p.x+xo, p.y+yo, p.x+dx+xo, p.y+dy+yo, GREEN);
+}
+
+int getPlayerSector(const Player& p, const std::vector<Sector> &sectors, const std::vector<Wall> &walls)
+{
+    for (const Sector& s : sectors)
+    {
+        if (pointInPolygon(p.x, p.y, walls, s.idx, s.numWalls)) {
+            return s.id;
+        }
+    }
+    return 0;
 }

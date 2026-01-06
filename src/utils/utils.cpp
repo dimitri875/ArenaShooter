@@ -1,5 +1,7 @@
 #include "utils/utils.h"
 #include "settings.h"
+#include "structs.h"
+#include <vector>
 #include <math.h>
 
 Vector2 operator*(const Vector2& v, float s)
@@ -108,4 +110,23 @@ float lineSegmentRayIntersection(const Vector2& rayOrigin, const Vector2& rayDir
         return t1;
     
     return INFINITY;
+}
+
+bool pointInPolygon(float px, float py, const std::vector<Wall>& walls, int startIdx, int numWalls)
+{
+    int count = 0;
+    for (int i = 0; i < numWalls; i++)
+    {
+        const Wall& w = walls[startIdx + i];
+        float x0 = w.x0, y0 = w.y0;
+        float x1 = w.x1, y1 = w.y1;
+
+        if ((y0 > py) != (y1 > py))
+        {
+            float t = (py - y0) / (y1 - y0);
+            float xIntersect = x0 + t * (x1 - x0);
+            if (px < xIntersect) count++;
+        }
+    }
+    return (count % 2) == 1;
 }

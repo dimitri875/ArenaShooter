@@ -6,6 +6,7 @@
 #include <vector>
 #include <string>
 #include <cassert>
+#include <iostream>
 
 std::vector<Sector> sectors;
 std::vector<Wall> walls;
@@ -23,6 +24,7 @@ void renderFrame(Color* frameBuffer)
 
     assert(sectors.size() > 0 && walls.size() > 0);
     renderMap(frameBuffer, sectors, walls, player);
+    renderMiniMap(frameBuffer, sectors, walls, player);
 }
 
 void handleInput()

@@ -33,6 +33,7 @@ int main(int argc, char **argv)
         BeginDrawing();
             ClearBackground(BLACK);
             DrawTextureEx(frame, Vector2{0, 0}, 0, 1, WHITE);
+            DrawText(TextFormat("%d FPS", GetFPS()), WIDTH - 100, 20, 20, GREEN);
         EndDrawing();
     }
 

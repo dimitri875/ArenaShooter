@@ -1,6 +1,8 @@
 #pragma once
 
 #include "raylib.h"
+#include "structs.h"
+#include <vector>
 
 Vector2 operator*(const Vector2& v, float s);
 
@@ -25,3 +27,5 @@ void drawLine(Color* frameBuffer, float x0, float y0, float x1, float y1, Color 
 void drawRect(Color* frameBuffer, float left, float top, float width, float height, Color c);
 
 float lineSegmentRayIntersection(const Vector2& rayOrigin, const Vector2& rayDirection, const Vector2& point1, const Vector2& point2);
+
+bool pointInPolygon(float px, float py, const std::vector<Wall>& walls, int startIdx, int numWalls);
