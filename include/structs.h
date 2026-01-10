@@ -9,7 +9,8 @@ struct Sector
 struct Wall
 {
     float x0, y0, x1, y1;
-    int portal;
+    int frontSector;  // The sector this wall belongs to
+    int backSector;   // The sector this wall connects; 0 -> solid wall
 };
 
 struct Player
@@ -18,15 +19,8 @@ struct Player
     float yaw, pitch;
 };
 
-// struct RayHitInfo
-// {
-//     float x, y, dist;
-//     int sectorId, wallIdx;
-//     int portal;
-// };
-
 struct RayHit
 {
-    int wallIdx, portal, frontSector, backSector;
+    int wallIdx;
     float distance;
 };

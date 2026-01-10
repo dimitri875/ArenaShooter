@@ -7,10 +7,7 @@
 #include <algorithm>
 
 static Vector2 lightDir = v_normalize({-1.0f, 0.5f});
-// static std::unordered_set<int> visited;
-// static RayHitInfo rayInfo[N_RAYS];
 static std::vector<RayHit> rayInfo[N_RAYS];
-// static std::unordered_set<int> wallSequence[N_RAYS];
 
 Color getColor(const Vector2& lightDir, const Wall& w)
 {
@@ -28,13 +25,12 @@ std::vector<RayHit> getRayHitInfo(int ray, const Vector2& origin, const Vector2&
 {
     std::vector<RayHit> info;
 
-    // wallSequence[ray].clear();
-
     for (const Sector& s : sectors)
     {
         for (int off = 0; off < s.numWalls; off++)
         {
-            const Wall& w = walls[s.idx+off];
+            int wallIdx = s.idx+off;
+            const Wall& w = walls[wallIdx];
 
             Vector2 point1 = {w.x0, w.y0};
             Vector2 point2 = {w.x1, w.y1};
@@ -42,22 +38,9 @@ std::vector<RayHit> getRayHitInfo(int ray, const Vector2& origin, const Vector2&
             float distance = lineSegmentRayIntersection(origin, direction, point1, point2);
 
             if (distance != INFINITY) {
-                RayHit hit = {s.idx+off, w.portal, s.id, distance};
+                RayHit hit = {wallIdx, distance};
                 info.push_back(hit);
             }
-
-            // if (distance != INFINITY)
-            // {
-            //     wallSequence[ray].insert(s.idx+off);
-            // }
-
-            // if (distance < info.dist)
-            // {
-            //     info.dist = distance;
-            //     info.portal = w.portal;
-            //     info.sectorId = s.id;
-            //     info.wallIdx = s.idx+off;
-            // }
         }
 
     }
@@ -69,224 +52,202 @@ std::vector<RayHit> getRayHitInfo(int ray, const Vector2& origin, const Vector2&
     return info;
 }
 
-// void extendRayAndRender(Color* frameBuffer, int ray, int sectorId, float prevTop, float prevBottom, const std::vector<Sector>& sectors, const std::vector<Wall>& walls, const Player& p)
-// {
-    // if (wallSequence[ray].size() == 0 || prevTop >= prevBottom)
-    //     return;
-
-    // float ao = -FOV/2 + ray * FOV/N_RAYS;
-    // int closestWallIdx = -1;
-    // float distance = INFINITY;
-
-    // for (int wIdx : wallSequence[ray])
-    // {
-    //     const Wall& w = walls[wIdx];
-
-    //     Vector2 origin = {p.x, p.y};
-    //     Vector2 direction = {cos(p.yaw+ao), sin(p.yaw+ao)};
-    //     Vector2 point1 = {w.x0, w.y0};
-    //     Vector2 point2 = {w.x1, w.y1};
-
-    //     float tmp = lineSegmentRayIntersection(origin, direction, point1, point2);
-
-    //     if (tmp < distance)
-    //     {
-    //         distance = tmp;
-    //         closestWallIdx = wIdx;
-    //     }
-    // }
-
-    // if (closestWallIdx == -1)
-    //     return;
-
-    // const Wall& w = walls[closestWallIdx];
-
-    // const Sector& s = sectors[sectorId-1];
-
-    // float playerZ = p.height;
-    
-    // float topZ = s.ceil - playerZ;
-    // float bottomZ = s.floor - playerZ;
-    
-    // float screenTop = (HEIGHT / 2.0f) - (topZ * SCALE) / (distance * cos(ao));
-    // float screenBottom = (HEIGHT / 2.0f) - (bottomZ * SCALE) / (distance * cos(ao));
-
-    // float left, top, width, height;
-    // width = (float)WIDTH/N_RAYS;
-    // left = ray * width;
-    // top = screenTop;
-    // height = screenBottom-screenTop;
-
-    // if (w.portal)
-    // {
-    //     wallSequence[ray].erase(closestWallIdx);
-
-    //     if (screenTop > prevTop)
-    //     {
-    //         drawRect(frameBuffer, left, prevTop, width, screenTop-prevTop, RED);
-    //     }
-    //     if (screenBottom < prevBottom)
-    //     {
-    //         drawRect(frameBuffer, left, screenBottom, width, prevBottom-screenBottom, GREEN);
-    //     }
-
-    //     extendRayAndRender(frameBuffer, ray, w.portal,  fmax(screenTop, prevTop), fmin(screenBottom, prevBottom), sectors, walls, p);
-    // }
-    // else
-    // {
-    //     drawRect(frameBuffer, left, top, width, height, getColor(lightDir, w));
-    // }
-
-// }
-
-// void renderWall(Color* frameBuffer, const Sector& s, const Wall& w, const Player& p)
-// {
-//     for (int ray = 0; ray < N_RAYS; ray++)
-//     {
-//         float ao = -FOV/2 + ray * (FOV/N_RAYS);
-//         float ra = p.yaw + ao;
-
-//         Vector2 rayDirection = {cos(ra), sin(ra)};
-//         Vector2 rayOrigin = {p.x, p.y};
-//         Vector2 point1 = {w.x0, w.y0};
-//         Vector2 point2 = {w.x1, w.y1};
-
-//         float distance = lineSegmentRayIntersection(rayOrigin, rayDirection, point1, point2);
-
-//         if (distance == INFINITY)
-//             continue;
-        
-//         float playerZ = p.height;
-
-//         float topZ = s.ceil - playerZ;
-//         float bottomZ = s.floor - playerZ;
-
-//         float screenTop = (HEIGHT / 2.0f) - (topZ * SCALE) / (distance * cos(ao));
-//         float screenBottom = (HEIGHT / 2.0f) - (bottomZ * SCALE) / (distance * cos(ao));
-
-//         Color c = getColor(lightDir, w);
-
-//         drawRect(frameBuffer, ray * L_WIDTH, screenTop, L_WIDTH, screenBottom-screenTop, c);
-//     }
-// }
-
-// void renderSector(Color* frameBuffer, int id, const std::vector<Sector>& sectors, const std::vector<Wall>& walls, const Player& p)
-// {
-//     if (visited.find(id) != visited.end())
-//         return;
-//     visited.insert(id);
-
-//     const Sector& s = sectors[id-1];
-//     for (int off = 0; off < s.numWalls; off++)
-//     {
-//         const Wall& w = walls[s.idx+off];
-
-//         if (!w.portal)
-//         {
-//             renderWall(frameBuffer, s, w, p);
-//         }
-//         else
-//         {
-//             renderSector(frameBuffer, w.portal, sectors, walls, p);
-//         }
-//     }
-// }
-
 void renderMap(Color* frameBuffer, const std::vector<Sector>& sectors, const std::vector<Wall>& walls, const Player& p)
 {
-    // visited.clear();
-    // renderSector(frameBuffer, 1, sectors, walls, p);
     int sectorId = getPlayerSector(p, sectors, walls);
     std::cout << "Sector Id: " << sectorId << std::endl;
-    if (sectorId == 0) {
-        return;
-    }
+    if (sectorId == 0) return;
 
     Vector2 origin = {p.x, p.y};
+    
+    // Cast rays and store all wall hits per ray
     for (int ray = 0; ray < N_RAYS; ray++)
     {
         float ao = -FOV/2 + ray * FOV/N_RAYS;
-        Vector2 direction = {cos(p.yaw+ao), sin(p.yaw+ao)};
+        Vector2 direction = {cos(p.yaw + ao), sin(p.yaw + ao)};
         rayInfo[ray] = getRayHitInfo(ray, origin, direction, sectors, walls);
     }
-    
+
+    // Render each ray
     for (int ray = 0; ray < N_RAYS; ray++)
     {
-        float ceilHeight = sectors[sectorId-1].ceil;
-        float floorHeight = sectors[sectorId-1].floor;
-
         float ao = -FOV/2 + ray * FOV/N_RAYS;
-
         const std::vector<RayHit>& sortedHits = rayInfo[ray];
-        for (const RayHit& hit : sortedHits) {
 
-            float playerZ = p.height;
-            
-            float topZ = ceilHeight - playerZ;
-            float bottomZ = floorHeight - playerZ;
-            
-            float screenTop = (HEIGHT / 2.0f) - (topZ * SCALE) / (hit.distance * cos(ao));
-            float screenBottom = (HEIGHT / 2.0f) - (bottomZ * SCALE) / (hit.distance * cos(ao));
-    
-            float left, top, width, height;
-            width = (float)WIDTH/N_RAYS;
-            left = ray * width;
-            top = screenTop;
-            height = screenBottom - screenTop;
-            
-            if (hit.portal) {
-                const Sector& s = sectors[hit.sectorId-1];
-                floorHeight = fmin(floorHeight, s.floor);
-                ceilHeight = fmax(ceilHeight, s.ceil);
-                
-                topZ = ceilHeight - playerZ;
-                bottomZ = floorHeight - playerZ;
+        int currentSectorId = sectorId;
+        float playerZ = p.height;
+        float width = (float)WIDTH / N_RAYS;
+        float left = ray * width;
 
-                float thisTop = (HEIGHT / 2.0f) - (topZ * SCALE) / (hit.distance * cos(ao));
-                float thisBottom = (HEIGHT / 2.0f) - (bottomZ * SCALE) / (hit.distance * cos(ao));
+        // Track the top and bottom of the vertical slice that has already been drawn
+        float currentTop = 0;
+        float currentBottom = HEIGHT;
 
-                if (screenTop < thisTop) {
-                    drawRect(frameBuffer, left, screenTop, width, thisTop-screenTop, RED);
+        for (const RayHit& hit : sortedHits)
+        {
+            const Wall& w = walls[hit.wallIdx];
+            const Sector& currentSector = sectors[currentSectorId - 1];
+
+            // 1. Project Current Sector Heights (The "Frame" we are looking through)
+            float ceilZ = currentSector.ceil - playerZ;
+            float floorZ = currentSector.floor - playerZ;
+            
+            // Note: Ensure hit.distance is not zero to avoid division by zero
+            float dist = hit.distance * cos(ao); 
+            float screenCeil = (HEIGHT / 2.0f) - (ceilZ * SCALE) / dist;
+            float screenFloor = (HEIGHT / 2.0f) - (floorZ * SCALE) / dist;
+
+            // Solid wall (no portal)
+            if (!w.backSector)
+            {
+                // Clip the solid wall to the current view window
+                float drawTop = fmax(currentTop, screenCeil);
+                float drawBottom = fmin(currentBottom, screenFloor);
+
+                if (drawBottom > drawTop) {
+                    drawRect(frameBuffer, left, drawTop, width, drawBottom - drawTop, getColor(lightDir, w));
                 }
-
-                if (screenBottom > thisBottom) {
-                    drawRect(frameBuffer, left, thisBottom, width, screenBottom-thisBottom, GREEN);
-                }
-
-            } else {
-                const Wall& w = walls[hit.wallIdx];
-                drawRect(frameBuffer, left, top, width, height, getColor(lightDir, w));
-                break;
+                break; // Wall is solid, stop processing this ray
             }
+
+            // Portal wall
+            int nextSectorId = (currentSectorId == w.frontSector) ? w.backSector : w.frontSector;
+            const Sector& nextSector = sectors[nextSectorId - 1];
+
+            // 2. Project Next Sector Heights (The "Target" we are looking at)
+            float nextCeilZ = nextSector.ceil - playerZ;
+            float nextFloorZ = nextSector.floor - playerZ;
+            float screenNextCeil = (HEIGHT / 2.0f) - (nextCeilZ * SCALE) / dist;
+            float screenNextFloor = (HEIGHT / 2.0f) - (nextFloorZ * SCALE) / dist;
+
+            // 3. Render Upper Wall (The drop from Current Ceiling to Next Ceiling)
+            // Only visible if next ceiling is physically lower (Screen Y is higher)
+            if (screenNextCeil > screenCeil) 
+            {
+                float drawTop = fmax(currentTop, screenCeil);       // Start at Current Ceiling (clamped)
+                float drawBottom = fmin(currentBottom, screenNextCeil); // End at Next Ceiling (clamped)
+
+                if (drawBottom > drawTop) {
+                    drawRect(frameBuffer, left, drawTop, width, drawBottom - drawTop, RED);
+                }
+            }
+
+            // 4. Render Lower Wall (The step up from Current Floor to Next Floor)
+            // Only visible if next floor is physically higher (Screen Y is lower)
+            if (screenNextFloor < screenFloor) 
+            {
+                float drawTop = fmax(currentTop, screenNextFloor);  // Start at Next Floor (clamped)
+                float drawBottom = fmin(currentBottom, screenFloor);    // End at Current Floor (clamped)
+
+                if (drawBottom > drawTop) {
+                    drawRect(frameBuffer, left, drawTop, width, drawBottom - drawTop, GREEN);
+                }
+            }
+
+            // 5. Update Occlusion Window
+            // The view into the next sector is restricted by the geometry of BOTH sectors.
+            // Visually, the "hole" is the intersection of the two openings.
+            float portalScreenTop = fmax(screenCeil, screenNextCeil);     // The lower of the two ceilings (Higher Screen Y)
+            float portalScreenBottom = fmin(screenFloor, screenNextFloor); // The higher of the two floors (Lower Screen Y)
+
+            currentTop = fmax(currentTop, portalScreenTop);
+            currentBottom = fmin(currentBottom, portalScreenBottom);
+
+            // Optimization: If the window closes up, stop casting
+            if (currentTop >= currentBottom) break;
+
+            // Update current sector
+            currentSectorId = nextSectorId;
         }
-
-        // const Wall& w = walls[info.wallIdx];
-        // const Sector& s = sectors[info.sectorId-1];
-
-        // float playerZ = p.height;
-        
-        // float topZ = s.ceil - playerZ;
-        // float bottomZ = s.floor - playerZ;
-        
-        // float screenTop = (HEIGHT / 2.0f) - (topZ * SCALE) / (info.dist * cos(ao));
-        // float screenBottom = (HEIGHT / 2.0f) - (bottomZ * SCALE) / (info.dist * cos(ao));
-
-        // float left, top, width, height;
-        // width = (float)WIDTH/N_RAYS;
-        // left = ray * width;
-        // top = screenTop;
-        // height = screenBottom - screenTop;
-
-        // if (info.portal)
-        // {
-        //     extendRayAndRender(frameBuffer, ray, info.portal, screenTop, screenBottom, sectors, walls, p);
-        // }
-        // else
-        // {
-        //     drawRect(frameBuffer, left, top, width, height, getColor(lightDir, w));
-        // }
     }
 }
+
+
+// void renderMap(Color* frameBuffer, const std::vector<Sector>& sectors, const std::vector<Wall>& walls, const Player& p)
+// {
+//     int sectorId = getPlayerSector(p, sectors, walls);
+//     std::cout << "Sector Id: " << sectorId << std::endl;
+//     if (sectorId == 0) {
+//         return;
+//     }
+
+//     Vector2 origin = {p.x, p.y};
+//     for (int ray = 0; ray < N_RAYS; ray++)
+//     {
+//         float ao = -FOV/2 + ray * FOV/N_RAYS;
+//         Vector2 direction = {cos(p.yaw+ao), sin(p.yaw+ao)};
+//         rayInfo[ray] = getRayHitInfo(ray, origin, direction, sectors, walls);
+//     }
+    
+//     for (int ray = 0; ray < N_RAYS; ray++)
+//     {
+
+//         float ao = -FOV/2 + ray * FOV/N_RAYS;
+
+//         const std::vector<RayHit>& sortedHits = rayInfo[ray];
+//         int currentSectorId = sectorId;  // Need to update this for the case when there are portal walls after portal walls
+//         for (const RayHit& hit : sortedHits) {
+//             float playerZ = p.height;
+            
+//             const Wall& w = walls[hit.wallIdx];
+//             const Sector& currentSector = sectors[currentSectorId-1];
+            
+//             float ceilHeight = currentSector.ceil;
+//             float floorHeight = currentSector.floor;
+            
+//             float topZ = ceilHeight - playerZ;
+//             float bottomZ = floorHeight - playerZ;
+
+//             float currentTop = (HEIGHT / 2.0f) - (topZ * SCALE) / (hit.distance * cos(ao));;
+//             float currentBottom = (HEIGHT / 2.0f) - (bottomZ * SCALE) / (hit.distance * cos(ao));
+//             // Solid wall
+//             if (!w.backSector) {
+
+//                 float width = (float)WIDTH/N_RAYS;
+//                 float left = ray * width;
+
+//                 float top = currentTop;
+//                 float height = currentBottom - currentTop;
+
+//                 drawRect(frameBuffer, left, top, width, height, getColor(lightDir, w));
+//                 break;
+//             } else {
+//                 // Finding next sector
+//                 int nextSectorId = (currentSectorId == w.frontSector) ? w.backSector : w.frontSector;
+
+//                 // Finding clipping and drawing
+//                 float playerZ = p.height;
+                
+//                 float width = (float)WIDTH/N_RAYS;
+//                 float left = ray * width;
+
+//                 const Sector& currentSector = sectors[currentSectorId-1];
+//                 const Sector& nextSector = sectors[nextSectorId-1];
+//                 float floorHeight = fmin(currentSector.floor, nextSector.floor);
+//                 float ceilHeight = fmax(currentSector.ceil, nextSector.ceil);
+                
+//                 float topZ = ceilHeight - playerZ;
+//                 float bottomZ = floorHeight - playerZ;
+
+//                 float nextTop = (HEIGHT / 2.0f) - (topZ * SCALE) / (hit.distance * cos(ao));
+//                 float nextBottom = (HEIGHT / 2.0f) - (bottomZ * SCALE) / (hit.distance * cos(ao));
+
+//                 if (currentTop < nextTop) {
+//                     drawRect(frameBuffer, left, currentTop, width, nextTop-currentTop, RED);
+//                     currentTop = nextTop;
+//                 }
+
+//                 if (currentBottom > nextBottom) {
+//                     drawRect(frameBuffer, left, nextBottom, width, currentBottom-nextBottom, GREEN);
+//                     currentBottom = nextBottom;
+//                 }
+
+//                 // Updating Current Sector
+//                 currentSectorId = nextSectorId;
+//             }
+//         }
+//     }
+// }
 
 void renderMiniMap(Color* frameBuffer, const std::vector<Sector>& sectors, const std::vector<Wall>& walls, const Player& p)
 {
@@ -302,7 +263,7 @@ void renderMiniMap(Color* frameBuffer, const std::vector<Sector>& sectors, const
 
     for (const Wall& w : walls)
     {
-        Color c = (w.portal) ? BLUE : RED;
+        Color c = (w.backSector) ? BLUE : RED;
         drawLine(frameBuffer, w.x0+xo, w.y0+yo, w.x1+xo, w.y1+yo, c);
     }
 

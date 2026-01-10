@@ -66,7 +66,7 @@ void loadLevelFromFile(const std::string& path, std::vector<Sector>& sectors, st
     size_t sectorIdx = 0, wallIdx = 0;
     while (sectorIdx < sectorsRaw.size())
     {
-        std::vector<std::string> tokens = tokenize(sectorsRaw[sectorIdx++]);
+        std::vector<std::string> tokens = tokenize(sectorsRaw[sectorIdx]);
         int id = std::stoi(tokens[0]), idx = std::stoi(tokens[1]), numWalls = std::stoi(tokens[2]);
         float floor = std::stof(tokens[3]), ceil = std::stof(tokens[4]);
         Sector newSector = {id, idx, numWalls, floor, ceil};
@@ -77,10 +77,13 @@ void loadLevelFromFile(const std::string& path, std::vector<Sector>& sectors, st
         {
             tokens = tokenize(wallsRaw[wallIdx++]);
             float x0 = std::stof(tokens[0]), y0 = std::stof(tokens[1]), x1 = std::stof(tokens[2]), y1 = std::stof(tokens[3]);
-            int portal = std::stoi(tokens[4]);
-            Wall newWall = {x0, y0, x1, y1, portal};
+            int frontSector = sectorIdx+1;  // Current Sector ID
+            int backSector = std::stoi(tokens[4]);   // Portal Sector ID
+            Wall newWall = {x0, y0, x1, y1, frontSector, backSector};
 
             walls.push_back(newWall);
         }
+
+        sectorIdx++;
     }
 }
